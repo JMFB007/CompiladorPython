@@ -3,7 +3,6 @@ from typing_extensions import runtime_checkable
 
 #parte grafica es obligatoria?
 
-
 #TENER LISTO:
 #LOGICA Y LEXICO
 #Compilador, Lexico, Semantico, Grafico, Manual
@@ -195,21 +194,31 @@ def traverser(lista):
                 else:
                     b = aux.data
                 if a == None or b == None:
+                    check = False
                     print ("Error: directorio no pudo completar con los 2 textos dados")
                 else:
                     dict[a] = [b]
                     aux = aux.next.next
         aux = aux.upper
-        v = vari("1", aux, dict)
-        return v
-    def op2(supdic, aux):#2 x = y
-        if(aux.next.next.type == "cita" or aux.next.next.type == "cita"):
-            asign = aux.next.next.data
-        elif(aux.next.next.type == "text"):
-            asign = supdic[aux.next.next.data]
+        if check == False:
+            v = vari("x")
         else:
-            print("Error: no sabe que asignar")
-        v = vari("2", aux.next.next.next, asign, aux.next.next.data)
+            v = vari("1", aux, dict)
+        return v
+    def op2(supdic, aux):# 2 x = y
+        check = False
+        if(aux.next.next.type == "text"):
+            if supdic[aux.next.next.data] == None:
+                print("Error: la variable no ha sido definida")
+                check = True
+            else:
+                asign = supdic[aux.next.next.data]
+        else:
+            asign = aux.next.next.data
+        if check:
+            v = vari("x")
+        else:
+            v = vari("2", aux.next.next.next, aux.data, asign)
         return v
     def op3(supdic, aux):#3 x += y
         xx = aux.data
@@ -237,14 +246,23 @@ def traverser(lista):
             print("Error: no puede retornar eso")
         v = vari("4", aux.next.next, asign)
         return v
-    def op5(supdic, aux):#5) print
-        if(aux.next.next.type == "cita" and aux.next.next.next.data == ")"):
+    def op5(supdic, aux):#5) print(  lol  )
+        check = False
+        if aux.next.next.type == "cita":
             asign = aux.next.next.data
-        elif(aux.next.next.type == "text" and aux.next.next.next.data == ")"):
-            asign = supdic[aux.next.next.data]
+        elif aux.next.next.type == "text":
+            if supdic[aux.next.next.data] != None:
+                asign = supdic[aux.next.next.data]
+            else:
+                print("Error: La variable no ha sido definida")
+                check = True
         else:
+            check = True
             print("Error: no puede imprimir eso")
-        v = vari("5", aux.next.next.next.next, asign)
+        if check == True:
+            v = vari("x")
+        else:
+            v = vari("5", aux.next.next.next.next, asign)
         return v
     def op6(supdic, aux):#6) while SKIPPED
         aux = aux.next.next
@@ -257,24 +275,15 @@ def traverser(lista):
         '''def op7(supdic, aux):
         for aux.next.next.data in aux.next.next.next.next.data:
             print("lol")'''
-    def op7(supdic, aux):#7) for TEXT in TEXT {   } SKIPPED R E D O
-        aux = aux.next.next.next.next.next.under
-        while aux.data != "}" and check:
-            if aux.type == "text" and aux.next.data == ":" and aux.next.next.type == "text" and aux.next.next.next == ",":
-                dict(aux.data) = aux.next.next.data
-                aux = aux.next.next.next.next
-            else:
-                print ("Error: ")
-                check = True
-    def op8(supdic, aux):#8) def code (){   } SKIPPED
-        aux = aux.next.next.next.next.next.under
-        while aux.data != "}" and check:
-            if aux.type == "text" and aux.next.data == ":" and aux.next.next.type == "text" and aux.next.next.next == ",":
-                dict(aux.data) = aux.next.next.data
-                aux = aux.next.next.next.next
-            else:
-                print ("Error: ")
-                check = True
+    def op7(supdic, aux):#7) return F I X
+        if(aux.next.type == "cita"):
+            asign = aux.next.data
+        elif(aux.next.type == "text"):
+            asign = supdic[aux.next.data]
+        else:
+            print("Error: no puede retornar eso")
+        v = vari("4", aux.next.next, asign)
+        return v
     def lector(lista):
         supdic = {}
         aux = lista.head
@@ -284,30 +293,27 @@ def traverser(lista):
         while aux != None:
             print(aux.data)
             if(aux.type == "text"):
-                #1 dict = {   }
+                # 1 dict = {   }
                 if aux.data.lower() == "dict" and aux.next.data == "=" and aux.next.next.data == "{":
                     v = op1(supdic, aux.next.next.under)
-                #2 x = y
-                elif aux.type == "text" and aux.next.data == "=" and aux.next.next.type == "text":
+                # 2 x = y
+                elif aux.type == "text" and aux.next.data == "=" and (aux.next.next.type == "text" or aux.next.next.type == "cita"):
                     v = op2(supdic, aux)
                 #3 x += y
-                elif aux.type == "text" and aux.next.data == "+=" and aux.next.next.type == "text":
+                elif aux.type == "text" and aux.next.data == "+=" and (aux.next.next.type == "text" or aux.next.next.type == "cita"):
                     v = op3(supdic, aux)
                 #4) return
                 elif aux.data.lower() == "return":
                     v = op4(supdic, aux)
                 #5) print
-                elif aux.data.lower() == "print" and aux.next.data == "(":
-                    v = op5(supdic, aux)
+                elif aux.data.lower() == "print" and aux.next.data == "(" and aux.next.next.next.data == ")":
+                    v = op5(supdic, aux.next)
                 #6) while SKIPPED
                 elif aux.data.lower() == "while" and aux.next.data == "(":
                     v = op6(supdic, aux)
-                #7) for TEXT in TEXT {   } SKIPPED
-                elif aux.data.lower() == "for" and aux.next.data == "(" and aux.next.next.type == "text" and aux.next.next.next.type == "in" and aux.next.next.next.type == "text" and aux.next.next.next.type == ")" and aux.next.next.next.next.type == "{":
-                    v = op7(supdic, aux)
-                #8) def code (){   } SKIPPED
-                elif aux.data.lower() == "def" and aux.next.type == "text" and aux.next.next.data == "(" and aux.next.next.next.type == "text" and aux.next.next.next.next.data == ")" and aux.next.next.next.next.next.data == "{":
-                    v = op8(supdic, aux)
+                #7) Code(   )
+                elif aux.data.lower() == "code" and aux.next.data == "(":
+                    v = op7(supdic, aux.next.next)
                 #ninguno de los anteriores
                 else:
                     print("wtf es esto?: " + aux.data)
